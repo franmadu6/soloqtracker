@@ -49,4 +49,48 @@ app.get("/leaderboard", async (req, res) => {
   res.json(players);
 });
 
+async function getPUUID(name, tag, region) {
+  const res = await axios.get(
+    `https://${region}.api.riotgames.com/riot/account/v1/accounts/by-riot-id/${encodeURIComponent(name)}/${tag}`,
+    { headers: { "X-Riot-Token": RIOT_KEY } }
+  );
+  return res.data.puuid;
+}
+
+app.post("/admin/add", async (req, res) => {
+  const { summoner, tagLine, region } = req.body;
+
+  if (!summoner || !tagLine || !region) {
+    return res.status(400).json({ error: "Datos incompletos" });
+  }
+
+  try {
+    const puuid = await getPUUID(summoner, tagLine, region);
+
+    const players = JSON.parse(fs.readFileSync(DATA_FILE));
+
+    if (players.find(p => p.puuid === puuid)) {
+      return res.status(409).json({ error: "Jugador ya existe" });
+    }
+
+    players.push({
+      summoner,
+      puuid,
+      region,
+      tier: "UNRANKED",
+      rank: "",
+      lp: 0,
+      wins: 0,
+      losses: 0,
+      winrate: 0
+    });
+
+    fs.writeFileSync(DATA_FILE, JSON.stringify(players, null, 2));
+    res.json({ ok: true });
+  } catch (e) {
+    res.status(500).json({ error: "Jugador no encontrado en Riot" });
+  }
+});
+
+
 app.listen(3000);
