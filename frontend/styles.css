@@ -1,0 +1,4 @@
+body{background:#0b0e13;color:#fff;font-family:Arial}
+header{display:flex;justify-content:space-between;padding:20px}
+table{width:100%;border-collapse:collapse}
+td,th{padding:10px;border-bottom:1px solid #333}
